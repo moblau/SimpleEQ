@@ -76,43 +76,44 @@ void SimpleEqAudioProcessorEditor::paint (Graphics& g)
         double mag = 1.f;
         auto freq = mapToLog10(double(i)/double(w), 20.0,20000.0);
         
-        if ( !lowCut.isBypassed<0>()  )
+        if ( !monoChain.isBypassed<ChainPositions::Peak>() )
         {
             mag*= peak.coefficients->getMagnitudeForFrequency(freq,sampleRate);
+        }
+        if ( !lowCut.isBypassed<0>()  )
+        {
+            mag*= lowCut.get<0>().coefficients->getMagnitudeForFrequency(freq,sampleRate);
         }
         if ( !lowCut.isBypassed<1>()  )
         {
-            mag*= peak.coefficients->getMagnitudeForFrequency(freq,sampleRate);
+            mag*= lowCut.get<1>().coefficients->getMagnitudeForFrequency(freq,sampleRate);
         }
         if ( !lowCut.isBypassed<2>()  )
         {
-            mag*= peak.coefficients->getMagnitudeForFrequency(freq,sampleRate);
+            mag*= lowCut.get<2>().coefficients->getMagnitudeForFrequency(freq,sampleRate);
         }
         if ( !lowCut.isBypassed<3>()  )
         {
-            mag*= peak.coefficients->getMagnitudeForFrequency(freq,sampleRate);
+            mag*= lowCut.get<3>().coefficients->getMagnitudeForFrequency(freq,sampleRate);
         }
         
         if ( !highCut.isBypassed<0>()  )
         {
-            mag*= peak.coefficients->getMagnitudeForFrequency(freq,sampleRate);
+            mag*= highCut.get<0>().coefficients->getMagnitudeForFrequency(freq,sampleRate);
         }
         if ( !highCut.isBypassed<1>()  )
         {
-            mag*= peak.coefficients->getMagnitudeForFrequency(freq,sampleRate);
+            mag*= highCut.get<1>().coefficients->getMagnitudeForFrequency(freq,sampleRate);
         }
         if ( !highCut.isBypassed<2>()  )
         {
-            mag*= peak.coefficients->getMagnitudeForFrequency(freq,sampleRate);
+            mag*= highCut.get<2>().coefficients->getMagnitudeForFrequency(freq,sampleRate);
         }
         if ( !highCut.isBypassed<3>()  )
         {
-            mag*= peak.coefficients->getMagnitudeForFrequency(freq,sampleRate);
+            mag*= highCut.get<3>().coefficients->getMagnitudeForFrequency(freq,sampleRate);
         }
-        if ( monoChain.isBypassed<ChainPositions::Peak>() )
-        {
-            mag*= peak.coefficients->getMagnitudeForFrequency(freq,sampleRate);
-        }
+        
         mags[i] = Decibels::gainToDecibels(mag);
     }
     
@@ -176,6 +177,11 @@ void SimpleEqAudioProcessorEditor::timerCallback()
         auto peakCoefficients = makePeakFilter(chainSettings,processor.getSampleRate());
         updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
         
+        auto lowCutCoefficients = makeLowCutFilter(chainSettings,processor.getSampleRate());
+        auto highCutCoefficients = makeHighCutFilter(chainSettings,processor.getSampleRate());
+        
+        updateCutFilter(monoChain.get<ChainPositions::LowCut>(), lowCutCoefficients, chainSettings.lowCutSlope);
+        updateCutFilter(monoChain.get<ChainPositions::HighCut>(), highCutCoefficients, chainSettings.highCutSlope);
         repaint();
         
         //signal repaint
