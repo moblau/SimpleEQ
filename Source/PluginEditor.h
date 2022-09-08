@@ -26,9 +26,35 @@ struct CustomRotarySlider : juce::Slider
     }
     
 };
-class SimpleEqAudioProcessorEditor  : public juce::AudioProcessorEditor,
-juce::AudioProcessorParameter::Listener,
-juce::Timer
+
+struct ResponseCurveComponent: juce::Component,
+                                juce::AudioProcessorParameter::Listener,
+                                juce::Timer
+{
+    ResponseCurveComponent(SimpleEqAudioProcessor&);
+    ~ResponseCurveComponent();
+    
+    void parameterValueChanged(int parameterIndex, float newValue) override;
+    
+    
+    void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override{
+        
+    }
+    
+    void timerCallback() override;
+    
+    void paint(juce::Graphics& g) override;
+    
+private:
+        SimpleEqAudioProcessor& processor;
+        juce::Atomic<bool> parametersChanged { false};
+    
+    MonoChain monoChain;
+};
+
+
+class SimpleEqAudioProcessorEditor  : public juce::AudioProcessorEditor
+
 {
 public:
     SimpleEqAudioProcessorEditor (SimpleEqAudioProcessor&);
@@ -38,23 +64,13 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
-    
-    void parameterValueChanged(int parameterIndex, float newValue) override;
-        
-    
-    void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override{
-        
-    }
-    
-    void timerCallback() override;
+
     
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     SimpleEqAudioProcessor& processor;
 
-    
-    juce::Atomic<bool> parametersChanged { false};
     
     CustomRotarySlider  peakFreqSlider,
                         peakGainSlider,
@@ -63,6 +79,9 @@ private:
                         highCutFreqSlider,
                         lowCutSlopeSlider,
                         highCutSlopeSlider;
+    
+    ResponseCurveComponent responseCurveComponent;
+    
     
     using APVTS = juce::AudioProcessorValueTreeState;
     
@@ -78,6 +97,5 @@ private:
     
     std::vector<juce::Component*> getComps();
     
-    MonoChain monoChain;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEqAudioProcessorEditor)
 };
